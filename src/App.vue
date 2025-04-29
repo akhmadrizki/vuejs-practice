@@ -1,17 +1,18 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import Modal from './components/Modal.vue'
 import Navbar from './components/Navbar.vue'
 import Slider from './components/Slider.vue'
-import TheWelcome from './components/TheWelcome.vue'
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 
 // state variable
 const posts = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const selectPost = ref(null);
+
+// state pagination
+const currentPage = ref(1);
+const postPerPage = ref(6);
 
 // proses fetching data API
 const fetchPosts = async () => {
@@ -41,6 +42,35 @@ const viewDetails = (post) => {
   selectPost.value = post;
 };
 
+// computed untk paginasi
+const totalPages = computed(() =>{
+  return Math.ceil(posts.value.length / postPerPage.value);
+});
+
+const paginatedPosts = computed(() => {
+  const startIndex = (currentPage.value - 1) * postPerPage.value;
+  const endIndex = startIndex + postPerPage.value;
+  return posts.value.slice(startIndex, endIndex);
+});
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+};
+
 onMounted(fetchPosts);
 
 </script>
@@ -52,7 +82,7 @@ onMounted(fetchPosts);
 
   <!-- Card -->
   <div class="card-container">
-    <div v-for="post in posts" :key="post.id" class="card">
+    <div v-for="post in paginatedPosts" :key="post.id" class="card">
       <div class="card-title">{{ post.title }}</div>
       <p class="card-body">{{ post.body }}</p>
       <div class="card-footer">
@@ -60,6 +90,31 @@ onMounted(fetchPosts);
         <button class="details-button">View Detail</button>
       </div>
     </div>
+
+    <!-- Pagination Here -->
+    <div class="pagination">
+      
+      <button class="pagination-button" @click="prevPage">
+        Previous
+      </button>
+
+      <div class="page-numbers">
+        <button 
+          class="page-number" 
+          v-for="page in totalPages" 
+          :key="page"
+          @click="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+      </div>
+
+      <button class="pagination-button" @click="nextPage">
+        Next
+      </button>
+
+    </div>
+
   </div>
 </template>
 
@@ -123,6 +178,30 @@ onMounted(fetchPosts);
 }
 
 .details-button:hover {
+  background-color: #2980b9;
+}
+
+/* pagination style */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2rem 0;
+}
+
+.pagination-button {
+  background-color: #4398db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  margin: 0 0.5rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.pagination-button:hover {
   background-color: #2980b9;
 }
 </style>
